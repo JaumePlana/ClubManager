@@ -59,9 +59,9 @@ Plata i Or; les categories FEM es mantenen en majuscules.
 
 ## Configuració del club
 
-Editeu `config.php` per indicar el nom del club, l'ID de temporada, les pistes
-de casa, els delegats disponibles per equip i quins noms s'han de mostrar com
-a delegades. Dins de cada equip, poseu els
+Copieu `config_example.php` com a `config.php` i substituïu les dades d'exemple
+pel nom del club, l'ID de temporada, les pistes de casa, els delegats per equip
+i quins noms s'han de mostrar com a delegades. Dins de cada equip, poseu els
 delegats en ordre de preferència. Les claus de `delegats_per_equip` han de
 coincidir amb `nom_equip_club`. Una persona pot aparèixer en diversos equips.
 L'ID FECAPA del club es detecta a partir del nom configurat i dels noms dels

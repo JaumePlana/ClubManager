@@ -22,16 +22,16 @@ JSON com un missatge preparat per compartir.
   mateix equip i després els d'altres equips que juguen a casa abans o després
   aquell dia.
 - `src/FormatadorMissatge.php` genera el text per compartir, agrupat en partits
-  a casa i fora, ordenat per data i hora. Utilitza el valor de `nom_equip_club`
-  tal com apareix al JSON, omet les seccions buides i separa les seccions amb
-  dues línies en blanc. `config.php` permet indicar quins noms es mostren com
-  a «Delegada».
-- `config.php` conté el nom del club, l'ID de temporada, les pistes de casa,
-  els delegats per equip i la llista de delegades. És un fitxer local ignorat
-  per Git.
+  a casa i fora, ordenat per data i hora. Utilitza `nom_equip_club` tal com
+  apareix al JSON i omet les seccions buides. Deixa dues línies en blanc entre
+  les seccions presents. La configuració permet indicar quins noms es mostren
+  com a «Delegada».
+- `config.php` conté la configuració privada local del club i està exclòs de
+  Git. `config_example.php` és la plantilla amb noms d'exemple; es copia com a
+  `config.php` i s'emplena amb les dades pròpies.
 - Els scripts de prova són a `tests/`: `tests/test.php` imprimeix el JSON i
-  `tests/test_missatge.php` imprimeix el missatge formatat. Les rutes de tots
-  dos scripts apunten a `src/` i `config.php` a l'arrel del projecte.
+  `tests/test_missatge.php` imprimeix el missatge formatat. Tots dos llegeixen
+  `src/` i `config.php` des de l'arrel del projecte.
 
 ## Execució dels exemples
 
@@ -42,15 +42,16 @@ php tests/test.php
 php tests/test_missatge.php
 ```
 
-## Repositori Git
+## Repositori Git i canvis locals
 
-- El remot `origin` apunta a `https://github.com/JaumePlana/ClubManager.git`.
-- L'últim commit pujat és `14196c3` (`Format weekly match assignment message`).
-- Els canvis locals posteriors (inclòs el trasllat dels scripts a `tests/`)
-  encara no estan commitats.
+- El remot `origin` és `https://github.com/JaumePlana/ClubManager.git`.
+- L'últim commit pujat és `3fb6cfc` (`Move example scripts into tests directory`).
+- Els canvis actuals a `README.md`, `PROGRESS.md` i el nou `config_example.php`
+  encara no estan commitats. `config.php` és ignorat i no s'ha d'incloure al
+  repositori.
 
 ## Properes passes
 
-1. Revisar l'assignació de Taules amb els noms i les preferències reals del club.
-2. Decidir com es gestionen equips nous o canvis de temporada a `config.php`.
-3. Integrar el JSON i el missatge en una funció o punt d'entrada per a WordPress.
+1. Revisar l'assignació de Taules amb les preferències reals del club.
+2. Decidir com gestionar equips nous o canvis de temporada a la configuració.
+3. Integrar el JSON i el missatge en un punt d'entrada per a WordPress.
