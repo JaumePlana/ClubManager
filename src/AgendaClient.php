@@ -52,6 +52,33 @@ final class ClientAgenda
         ));
     }
 
+    /** Troba l'ID FECAPA del club cercant el seu nom als equips de l'agenda. */
+    public function identificarIdClub(array $partits, string $nomClub): int
+    {
+        $nomCercat = self::normalitzarNomClub($nomClub);
+        if ($nomCercat === '') {
+            throw new InvalidArgumentException('Cal indicar el nom del club.');
+        }
+
+        $ids = [];
+        foreach ($partits as $partit) {
+            foreach ([['id_club_local', 'equip_local'], ['id_club_visitant', 'equip_visitant']] as [$campId, $campEquip]) {
+                if (isset($partit[$campId], $partit[$campEquip])
+                    && str_starts_with(self::normalitzarNomClub((string) $partit[$campEquip]), $nomCercat)) {
+                    $ids[(int) $partit[$campId]] = true;
+                }
+            }
+        }
+
+        if (count($ids) !== 1) {
+            throw new RuntimeException(count($ids) === 0
+                ? 'No s’ha trobat cap club amb el nom configurat a l’agenda.'
+                : 'El nom configurat coincideix amb més d’un club; cal concretar-lo.');
+        }
+
+        return (int) array_key_first($ids);
+    }
+
     /**
      * Filtra els partits del club a la setmana de dilluns a diumenge.
      * Accepta DateTimeInterface o una data ISO com ara 2026-11-18.
@@ -233,6 +260,11 @@ final class ClientAgenda
     private static function netejar(string $valor): string
     {
         return trim(preg_replace('/\s+/u', ' ', html_entity_decode($valor, ENT_QUOTES | ENT_HTML5, 'UTF-8')) ?? '');
+    }
+
+    private static function normalitzarNomClub(string $nom): string
+    {
+        return mb_strtoupper(trim(preg_replace('/\s+/u', ' ', $nom) ?? ''), 'UTF-8');
     }
 
     private static function interpretarInici(string $date, string $time): ?DateTimeImmutable
