@@ -25,8 +25,11 @@ echo json_encode($partitsIdentificats, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_S
 ```
 
 Els camps dels partits són `competicio`, `data`, `hora`, `id_club_local`,
-`id_club_visitant`, `equip_local`, `equip_visitant`, `resultat`, `id_pista` i
-`pista`. L'hora és local de `Europe/Madrid` i no es retorna cap camp `kickoff`.
+`id_club_visitant`, `equip_local`, `equip_visitant`, `resultat`, `gols_local`,
+`gols_visitant`, `id_pista` i `pista`. El resultat conserva el format de
+FECAPA (`gols local - gols visitant`) i els gols es retornen com a enters; si
+el partit encara no s'ha jugat, `resultat`, `gols_local` i `gols_visitant` són
+`null`. L'hora és local de `Europe/Madrid` i no es retorna cap camp `kickoff`.
 `identificarEquipClub()` afegeix `categoria`, `categoria_edat`, `nivell`,
 `grup`, `equip_club` i `nom_equip_club`. Els nivells es mostren com Bronze,
 Plata i Or; les categories FEM es mantenen en majuscules.

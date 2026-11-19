@@ -200,6 +200,8 @@ final class ClientAgenda
             $date = self::netejar($cells->item(1)->textContent);
             $time = self::netejar($cells->item(2)->textContent);
             $kickoff = self::interpretarInici($date, $time);
+            $resultat = self::netejar($cells->item(7)->textContent) ?: null;
+            [$golsLocal, $golsVisitant] = self::desglossarResultat($resultat);
             $matches[] = [
                 'competicio' => self::netejar($cells->item(0)->textContent),
                 'data' => $kickoff?->format('Y-m-d'),
@@ -208,12 +210,24 @@ final class ClientAgenda
                 'id_club_visitant' => (int) $row->getAttribute('club2'),
                 'equip_local' => self::netejar($cells->item(4)->textContent),
                 'equip_visitant' => self::netejar($cells->item(6)->textContent),
-                'resultat' => self::netejar($cells->item(7)->textContent) ?: null,
+                'resultat' => $resultat,
+                'gols_local' => $golsLocal,
+                'gols_visitant' => $golsVisitant,
                 'id_pista' => (int) $row->getAttribute('pista'),
                 'pista' => self::netejar($cells->item(8)->textContent),
             ];
         }
         return $matches;
+    }
+
+    /** Separa els gols locals i visitants del resultat, o retorna nulls si no és vàlid. */
+    private static function desglossarResultat(?string $resultat): array
+    {
+        if ($resultat !== null && preg_match('/^(\d+)\s*[-–]\s*(\d+)$/u', $resultat, $gols) === 1) {
+            return [(int) $gols[1], (int) $gols[2]];
+        }
+
+        return [null, null];
     }
 
     private static function netejar(string $valor): string
