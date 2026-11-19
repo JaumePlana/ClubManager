@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-require_once __DIR__ . '/src/AgendaClient.php';
-require_once __DIR__ . '/src/AssignadorPartits.php';
-require_once __DIR__ . '/src/FormatadorMissatge.php';
+require_once dirname(__DIR__) . '/src/AgendaClient.php';
+require_once dirname(__DIR__) . '/src/AssignadorPartits.php';
+require_once dirname(__DIR__) . '/src/FormatadorMissatge.php';
 
-$configuracio = require __DIR__ . '/config.php';
+$configuracio = require dirname(__DIR__) . '/config.php';
 $agenda = new ClientAgenda((int) $configuracio['temporada_id']);
 $partits = $agenda->obtenirPartits();
 $idClub = $agenda->identificarIdClub($partits, $configuracio['club']);

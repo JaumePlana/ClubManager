@@ -1,8 +1,8 @@
 <?php
-require_once __DIR__ . '/src/AgendaClient.php';
-require_once __DIR__ . '/src/AssignadorPartits.php';
+require_once dirname(__DIR__) . '/src/AgendaClient.php';
+require_once dirname(__DIR__) . '/src/AssignadorPartits.php';
 
-$configuracio = require __DIR__ . '/config.php';
+$configuracio = require dirname(__DIR__) . '/config.php';
 $agenda = new ClientAgenda((int) $configuracio['temporada_id']);
 $partits = $agenda->obtenirPartits();
 $idClub = $agenda->identificarIdClub($partits, $configuracio['club']);
@@ -13,4 +13,3 @@ $partitsAssignats = $assignador->afegirDelegatITaula($partitsSetmana, $configura
 header('Content-Type: application/json; charset=utf-8');
 echo json_encode($partitsAssignats, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
 
-?>

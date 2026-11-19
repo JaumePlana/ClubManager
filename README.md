@@ -34,10 +34,18 @@ Si no hi ha cap persona disponible, el camp corresponent queda a `null`.
 
 `FormatadorMissatge::generarMissatge()` transforma aquests partits en un text
 per compartir, agrupat per partits a casa i fora i ordenat per dia i hora.
+Mostra el nom d'equip exactament com apareix al camp `nom_equip_club` del JSON.
 Per generar-lo, carregueu també `src/FormatadorMissatge.php` i passeu-li els
 partits assignats i la configuració. El camp `delegades` de `config.php` permet
 indicar quins noms han d'aparèixer com a «Delegada»; els altres es mostren com
-a «Delegat». `test_missatge.php` executa aquest flux i imprimeix el missatge.
+a «Delegat». `tests/test_missatge.php` executa aquest flux i imprimeix el missatge.
+
+Els scripts d'exemple són a `tests/`. Executeu-los des de l'arrel del projecte:
+
+```sh
+php tests/test.php
+php tests/test_missatge.php
+```
 
 Els camps dels partits són `competicio`, `data`, `hora`, `id_club_local`,
 `id_club_visitant`, `equip_local`, `equip_visitant`, `resultat`, `gols_local`,

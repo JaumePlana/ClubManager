@@ -20,3 +20,27 @@ Si et sembla un bon pla, potser podem:
     4. No és necessari retornar el camp "kickoff" en el JSON. Doncs, a més, l'hora que retorna no és UTC, sinó que és la CET.
     5. Ha de retornar Bronze, Plata i Or... no ho vull tot en majúscules. Però sí que està bé que sigui FEM, i les altres categories també sigui només la inicial la que estigui en majúscules.
     
+
+    --------
+
+Em pots crear ara una altra funció que processi el JSON resultant per a què retorni en aquest format?
+
+
+Bona nit!
+Proposta per aquest cap de setmana.
+
+*Partits a casa*
+_Diumenge 15/11_
+10:00 Aleví A: Delegat XXX , Taula YYY
+11:15 Infantil: Delegat YYYY, Taula AAAA
+12:30 Benjamí : Delegat BBBB , Taula CCCC
+
+
+*Partits fora*
+_Dissabte 14/11_
+16:00 Prebenjamí Bronze: Delegat DDDDD
+16:00 FEM 13: Delegada EEEE
+18:45 FEM 17: Delegat FFFF
+
+_Diumenge 15/11_
+15:30 Aleví B: Delegada GGGG

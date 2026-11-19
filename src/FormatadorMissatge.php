@@ -36,26 +36,43 @@ final class FormatadorMissatge
             $grups[$tipus][$partit['data']][] = $partit;
         }
 
-        $linies = [trim($salutacio), 'Proposta per aquest cap de setmana.', '', '*Partits a casa*'];
-        $this->afegirDies($linies, $grups['casa'], true, $delegades);
-        $linies[] = '';
-        $linies[] = '*Partits fora*';
-        $this->afegirDies($linies, $grups['fora'], false, $delegades);
+        $linies = [trim($salutacio), 'Proposta per aquest cap de setmana.'];
+        $seccioAfegida = false;
+        foreach ([
+            'casa' => ['*Partits a casa*', true],
+            'fora' => ['*Partits fora*', false],
+        ] as $tipus => [$titol, $aCasa]) {
+            if ($grups[$tipus] === []) {
+                continue;
+            }
 
-        return implode("\n", $linies);
+            $linies[] = '';
+            if ($seccioAfegida) {
+                $linies[] = '';
+            }
+            $linies[] = $titol;
+            $this->afegirDies($linies, $grups[$tipus], $aCasa, $delegades);
+            $seccioAfegida = true;
+        }
+
+        return rtrim(implode("\n", $linies));
     }
 
     private function afegirDies(array &$linies, array $partitsPerData, bool $aCasa, array $delegades): void
     {
         ksort($partitsPerData);
+        $primerDia = true;
         foreach ($partitsPerData as $data => $partits) {
             $dia = DateTimeImmutable::createFromFormat('!Y-m-d', $data, new DateTimeZone('Europe/Madrid'));
             if ($dia === false) {
                 continue;
             }
             usort($partits, static fn (array $a, array $b): int => strcmp($a['hora'], $b['hora']));
-            $linies[] = '';
+            if (!$primerDia) {
+                $linies[] = '';
+            }
             $linies[] = '_' . self::DIES[(int) $dia->format('N')] . ' ' . $dia->format('d/m') . '_';
+            $primerDia = false;
 
             foreach ($partits as $partit) {
                 $delegat = $partit['delegat'] ?? null;
@@ -78,21 +95,7 @@ final class FormatadorMissatge
 
     private function nomEquip(array $partit): string
     {
-        $categoria = (string) ($partit['categoria_edat'] ?? $partit['nom_equip_club'] ?? 'Equip');
-        if (mb_strtolower($categoria, 'UTF-8') === 'prebenjami') {
-            $categoria = 'Prebenjamí';
-        }
-
-        $lletra = $partit['equip_club'] ?? null;
-        if (is_string($lletra) && $lletra !== '') {
-            return $categoria . ' ' . $lletra;
-        }
-
-        if ($categoria === 'Prebenjamí' && !empty($partit['nivell'])) {
-            return $categoria . ' ' . $partit['nivell'];
-        }
-
-        return $categoria;
+        return (string) ($partit['nom_equip_club'] ?? 'Equip');
     }
 
     private function normalitzarNoms(array $noms): array
