@@ -6,6 +6,7 @@ declare(strict_types=1);
 final class AssignadorPartits
 {
     private const SEPARACIO_DELEGAT_SEGONS = 7200;
+    private const SEPARACIO_PISTES_DIFERENTS_SEGONS = 5400;
 
     public function __construct(private readonly ClientAgenda $agenda)
     {
@@ -68,7 +69,15 @@ final class AssignadorPartits
             foreach ($this->delegatsDe($resultats[$index]['nom_equip_club'], $delegatsPerEquip) as $delegat) {
                 if ($this->potFerDeDelegat($delegat, $inici, $ocupacions)) {
                     $resultats[$index]['delegat'] = $delegat;
-                    $ocupacions[$delegat][] = ['inici' => $inici, 'tipus' => 'delegat', 'partit' => $index];
+                    $ocupacions[$delegat][] = [
+                        'inici' => $inici,
+                        'tipus' => 'delegat',
+                        'partit' => $index,
+                        'es_casa' => $resultats[$index]['id_club_local'] === $idClub,
+                        'pista' => $resultats[$index]['id_club_local'] === $idClub
+                            ? $this->normalitzarPista((string) ($resultats[$index]['pista'] ?? ''))
+                            : null,
+                    ];
                     break;
                 }
             }
@@ -88,12 +97,24 @@ final class AssignadorPartits
             $candidats = $this->candidatsTaula($index, $resultats, $inicis, $partitsACasa, $delegatsPerEquip);
             foreach ($candidats as $candidat) {
                 if ($resultats[$index]['delegat'] === $candidat
-                    || !$this->potFerDeTaula($candidat, $inicis[$index], $index, $ocupacions)) {
+                    || !$this->potFerDeTaula(
+                        $candidat,
+                        $inicis[$index],
+                        $index,
+                        $partits[$index],
+                        $ocupacions,
+                    )) {
                     continue;
                 }
 
                 $resultats[$index]['taula'] = $candidat;
-                $ocupacions[$candidat][] = ['inici' => $inicis[$index], 'tipus' => 'taula', 'partit' => $index];
+                $ocupacions[$candidat][] = [
+                    'inici' => $inicis[$index],
+                    'tipus' => 'taula',
+                    'partit' => $index,
+                    'es_casa' => true,
+                    'pista' => $this->normalitzarPista((string) ($resultats[$index]['pista'] ?? '')),
+                ];
                 break;
             }
         }
@@ -161,11 +182,37 @@ final class AssignadorPartits
         return true;
     }
 
-    private function potFerDeTaula(string $nom, DateTimeImmutable $inici, int $index, array $ocupacions): bool
+    private function potFerDeTaula(
+        string $nom,
+        DateTimeImmutable $inici,
+        int $index,
+        array $partit,
+        array $ocupacions,
+    ): bool
     {
+        $pista = $this->normalitzarPista((string) ($partit['pista'] ?? ''));
         foreach ($ocupacions[$nom] ?? [] as $ocupacio) {
-            if ($ocupacio['inici']->getTimestamp() === $inici->getTimestamp()
-                || $ocupacio['partit'] === $index) {
+            if ($ocupacio['partit'] === $index) {
+                return false;
+            }
+
+            $separacio = abs($ocupacio['inici']->getTimestamp() - $inici->getTimestamp());
+            if ($separacio === 0) {
+                return false;
+            }
+
+            $pistesDiferents = ($ocupacio['es_casa'] ?? false)
+                && $pista !== ''
+                && ($ocupacio['pista'] ?? '') !== ''
+                && $ocupacio['pista'] !== $pista;
+            if ($pistesDiferents && $separacio < self::SEPARACIO_PISTES_DIFERENTS_SEGONS) {
+                return false;
+            }
+
+            $properPartitFora = ($ocupacio['tipus'] ?? null) === 'delegat'
+                && !($ocupacio['es_casa'] ?? false)
+                && $ocupacio['inici']->getTimestamp() > $inici->getTimestamp();
+            if ($properPartitFora && $separacio < self::SEPARACIO_DELEGAT_SEGONS) {
                 return false;
             }
         }

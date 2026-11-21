@@ -9,6 +9,14 @@ els partits i permet filtrar-los per club i per la setmana de dilluns a
 diumenge que conté una data. Els identificadors de club són els codis
 numèrics de FECAPA.
 
+El client desa el token en un transient de WordPress per reutilitzar-lo entre
+peticions i el renova amb marge, seguint la política de `portales.js`. Fora de
+WordPress, el conserva mentre viu l'objecte `ClientAgenda`. Si la consulta de
+l'agenda respon amb HTTP 401 o 403, elimina el token desat, en demana un de nou
+i repeteix la consulta una vegada. Si també falla, retorna l'error perquè qui
+crida el client pugui gestionar-lo. En PHP la renovació es comprova quan es fa
+una petició; no hi ha cap temporitzador de fons com al navegador.
+
 ```php
 require_once __DIR__ . '/src/AgendaClient.php';
 require_once __DIR__ . '/src/AssignadorPartits.php';
@@ -29,8 +37,13 @@ echo json_encode($partitsAssignats, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLAS
 delegat disponible segons l'ordre de preferència configurat, sense assignar
 la mateixa persona com a delegat a partits amb menys de dues hores entre els
 seus inicis. A les partides de casa, proposa primer els delegats del mateix
-equip i després els dels equips que juguen a casa abans o després aquell dia.
-Si no hi ha cap persona disponible, el camp corresponent queda a `null`.
+equip i després els dels altres equips que juguen a casa aquell dia, començant
+pel partit més proper en horari. Una persona no pot tenir dues tasques al mateix
+partit ni a la mateixa hora. Si les tasques són en partits de casa en pistes
+diferents, cal que els inicis estiguin separats per almenys 90 minuts. Si no hi
+ha cap persona disponible, el camp corresponent queda a `null`. Quan una persona
+fa de Taula abans del seu partit fora com a Delegat, es respecten dues hores
+entre els inicis.
 
 `FormatadorMissatge::generarMissatge()` transforma aquests partits en un text
 per compartir, agrupat per partits a casa i fora i ordenat per dia i hora.

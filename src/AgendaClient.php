@@ -14,6 +14,12 @@ final class ClientAgenda
     private const URL_TOKEN = 'https://www.server2.sidgad.es/sg_token.php';
     private const URL_AGENDA = 'https://server2.sidgad.es/fecapa/00_fecapa_agenda_1.php';
     private const ORIGEN = 'https://www.hoqueipatins.fecapa.cat';
+    private const CLAU_MEMORIA_TOKEN = 'clubmanager_sidgad_token_v1';
+    private const DURADA_LOCAL_TOKEN_SEGONS = 1700;
+    private const MARGE_RENOVACIO_TOKEN_SEGONS = 300;
+
+    private ?array $tokenEnMemoria = null;
+    private int $renovarTokenAbansDe = 0;
 
     public function __construct(
         private readonly int $seasonId = 41,
@@ -26,14 +32,18 @@ final class ClientAgenda
     public function obtenirPartits(): array
     {
         $token = $this->obtenirToken();
-        $html = $this->ferPeticio(self::URL_AGENDA . '?' . http_build_query([
-            'st' => $token['token'],
-            'se' => $token['caducitat'],
-        ]), http_build_query([
-            'cliente' => 'fecapa',
-            'idm' => 1,
-            'id_temp' => $this->seasonId,
-        ]), self::ORIGEN . '/');
+        try {
+            $html = $this->demanarAgenda($token);
+        } catch (RuntimeException $error) {
+            if (!in_array($error->getCode(), [401, 403], true)) {
+                throw $error;
+            }
+
+            // Si la sessió ha caducat entre obtenir el token i llegir l'agenda,
+            // demana'n un de nou i repeteix la consulta una sola vegada.
+            $this->invalidarToken();
+            $html = $this->demanarAgenda($this->obtenirToken());
+        }
 
         return $this->analitzarPartits($html);
     }
@@ -152,12 +162,105 @@ final class ClientAgenda
 
     private function obtenirToken(): array
     {
+        $ara = time();
+        if ($this->tokenEnMemoria !== null && $this->renovarTokenAbansDe > $ara) {
+            return $this->tokenEnMemoria;
+        }
+
+        $tokenEnCache = $this->llegirTokenCompartit();
+        if ($tokenEnCache !== null) {
+            $this->tokenEnMemoria = $tokenEnCache['token'];
+            $this->renovarTokenAbansDe = $tokenEnCache['renovar_abans_de'];
+            return $this->tokenEnMemoria;
+        }
+
         $json = $this->ferPeticio(self::URL_TOKEN, null, self::ORIGEN . '/');
         $data = json_decode($json, true, 512, JSON_THROW_ON_ERROR);
         if (!isset($data['t'], $data['e'])) {
             throw new RuntimeException('La resposta del token de lagenda FECAPA es incompleta.');
         }
-        return ['token' => (string) $data['t'], 'caducitat' => (string) $data['e']];
+
+        $token = ['token' => (string) $data['t'], 'caducitat' => (string) $data['e']];
+        $renovarAbansDe = $ara
+            + self::DURADA_LOCAL_TOKEN_SEGONS
+            - self::MARGE_RENOVACIO_TOKEN_SEGONS;
+        if (ctype_digit($token['caducitat'])) {
+            $caducitat = (int) $token['caducitat'];
+            if ($caducitat > $ara) {
+                $renovarAbansDe = min(
+                    $renovarAbansDe,
+                    $caducitat - self::MARGE_RENOVACIO_TOKEN_SEGONS,
+                );
+            }
+        }
+
+        $this->tokenEnMemoria = $token;
+        $this->renovarTokenAbansDe = $renovarAbansDe;
+        $this->desarTokenCompartit($token, $renovarAbansDe);
+
+        return $token;
+    }
+
+    /** Recupera un token de la memòria cau compartida de WordPress, si n'hi ha. */
+    private function llegirTokenCompartit(): ?array
+    {
+        if (!function_exists('get_transient')) {
+            return null;
+        }
+
+        $cache = get_transient(self::CLAU_MEMORIA_TOKEN);
+        if (!is_array($cache)
+            || !isset($cache['token'], $cache['renovar_abans_de'])
+            || !is_array($cache['token'])
+            || !isset($cache['token']['token'], $cache['token']['caducitat'])
+            || (int) $cache['renovar_abans_de'] <= time()) {
+            return null;
+        }
+
+        return [
+            'token' => [
+                'token' => (string) $cache['token']['token'],
+                'caducitat' => (string) $cache['token']['caducitat'],
+            ],
+            'renovar_abans_de' => (int) $cache['renovar_abans_de'],
+        ];
+    }
+
+    /** Desa el token fins al moment en què caldrà obtenir-ne un de nou. */
+    private function desarTokenCompartit(array $token, int $renovarAbansDe): void
+    {
+        $tempsRestant = $renovarAbansDe - time();
+        if ($tempsRestant <= 0 || !function_exists('set_transient')) {
+            return;
+        }
+
+        set_transient(self::CLAU_MEMORIA_TOKEN, [
+            'token' => $token,
+            'renovar_abans_de' => $renovarAbansDe,
+        ], $tempsRestant);
+    }
+
+    /** Elimina el token desat abans de forçar-ne la renovació. */
+    private function invalidarToken(): void
+    {
+        $this->tokenEnMemoria = null;
+        $this->renovarTokenAbansDe = 0;
+        if (function_exists('delete_transient')) {
+            delete_transient(self::CLAU_MEMORIA_TOKEN);
+        }
+    }
+
+    /** Descarrega l'agenda amb el token indicat. */
+    private function demanarAgenda(array $token): string
+    {
+        return $this->ferPeticio(self::URL_AGENDA . '?' . http_build_query([
+            'st' => $token['token'],
+            'se' => $token['caducitat'],
+        ]), http_build_query([
+            'cliente' => 'fecapa',
+            'idm' => 1,
+            'id_temp' => $this->seasonId,
+        ]), self::ORIGEN . '/');
     }
 
     private function ferPeticio(string $url, ?string $postBody, string $referer): string
@@ -171,9 +274,15 @@ final class ClientAgenda
             CURLOPT_FOLLOWLOCATION => true,
             CURLOPT_CONNECTTIMEOUT => 10,
             CURLOPT_TIMEOUT => 30,
-            CURLOPT_HTTPHEADER => ['Origin: ' . self::ORIGEN],
+            CURLOPT_HTTPHEADER => [
+                'Accept: */*',
+                'Origin: ' . self::ORIGEN,
+                'Sec-Fetch-Dest: empty',
+                'Sec-Fetch-Mode: cors',
+                'Sec-Fetch-Site: cross-site',
+            ],
             CURLOPT_REFERER => $referer,
-            CURLOPT_USERAGENT => 'ClubManager agenda reader/1.0',
+            CURLOPT_USERAGENT => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36',
         ];
         if ($caBundle !== null) {
             if (!is_file($caBundle) || !is_readable($caBundle)) {
@@ -187,10 +296,9 @@ final class ClientAgenda
             curl_setopt_array($curl, [
                 CURLOPT_POST => true,
                 CURLOPT_POSTFIELDS => $postBody,
-                CURLOPT_HTTPHEADER => [
-                    'Origin: ' . self::ORIGEN,
+                CURLOPT_HTTPHEADER => array_merge($options[CURLOPT_HTTPHEADER], [
                     'Content-Type: application/x-www-form-urlencoded; charset=UTF-8',
-            ],
+                ]),
             ]);
         }
         $body = curl_exec($curl);
@@ -198,7 +306,10 @@ final class ClientAgenda
         $error = curl_error($curl);
         curl_close($curl);
         if ($body === false || $status < 200 || $status >= 300) {
-            throw new RuntimeException(sprintf('La peticio a FECAPA ha fallat (HTTP %d): %s', $status, $error));
+            throw new RuntimeException(
+                sprintf('La peticio a FECAPA ha fallat (HTTP %d): %s', $status, $error),
+                $status,
+            );
         }
         return $body;
     }

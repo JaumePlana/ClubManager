@@ -10,8 +10,11 @@ JSON com un missatge preparat per compartir.
 
 - `src/AgendaClient.php` consulta l'agenda de la FECAPA amb token SIDGAD i
   validació TLS, interpreta els partits i els filtra per club i per setmana
-  (de dilluns a diumenge). També identifica l'ID FECAPA a partir del nom del
-  club configurat.
+  (de dilluns a diumenge). Desa el token amb un marge de renovació a la memòria
+  cau de WordPress i, fora de WordPress, a la instància del client. Si la
+  consulta respon HTTP 401 o 403, invalida el token, en demana un de nou i ho
+  prova una vegada més. També identifica l'ID FECAPA a partir del nom del club
+  configurat.
 - El JSON inclou el resultat i els gols locals i visitants per separat. Els
   camps dels gols són `null` si el partit encara no s'ha jugat.
 - La identificació d'equip afegeix categoria, edat, nivell, grup, lletra i
@@ -19,8 +22,11 @@ JSON com un missatge preparat per compartir.
 - `src/AssignadorPartits.php` assigna Delegats segons l'ordre de preferència,
   respecta una separació mínima de dues hores entre partits com a Delegat i
   proposa Taula als partits de casa. Per a Taula prioritza els delegats del
-  mateix equip i després els d'altres equips que juguen a casa abans o després
-  aquell dia.
+  mateix equip i després els d'altres equips que juguen a casa aquell dia,
+  ordenats segons la proximitat horària. No assigna una persona a dues tasques
+  al mateix partit o a la mateixa hora; si dues tasques a casa són en pistes
+  diferents, exigeix 90 minuts entre els seus inicis. Si fa de Taula abans d'un
+  partit fora com a Delegat, exigeix dues hores entre els inicis.
 - `src/FormatadorMissatge.php` genera el text per compartir, agrupat en partits
   a casa i fora, ordenat per data i hora. Utilitza `nom_equip_club` tal com
   apareix al JSON i omet les seccions buides. Deixa dues línies en blanc entre
