@@ -92,4 +92,13 @@ php tests/test_agenda.php
    anteriors; l'endpoint administratiu del HAR només retorna noms.
 2. Si es volen auditar sis temporades completes, consultar també els IDs 31 i
    33 que apareixen al selector de `sidgad.cloud`.
-3. Integrar el JSON i el missatge en un punt d'entrada per a WordPress.
+3. Integrar el JSON i el missatge en un punt d'entrada per a WordPress. Fet: endpoint REST i shortcode documentats més avall.
+
+## Integració WordPress (22/11/2026)
+
+- Afegit `src/IntegracioWordPress.php`: carrega la configuració, obté i assigna els partits de la setmana, i exposa funcions per obtenir l'array o el JSON i el missatge formatat.
+- Registrat el shortcode `[assignacio_delegats]` per mostrar el missatge de la setmana actual o d'una data indicada.
+- Documentat l'ús des del tema fill a `README.md`. La configuració continua sent `config.php` local a l'arrel del projecte.
+- L'auditoria històrica d'IDs de competició continua pendent: les notes i HAR disponibles no mostren encara cap resposta amb aquests IDs per les temporades anteriors.
+
+- Aclariment de la integració: `assignacio-delegats` també és ara una ruta GET de l'API REST, amb `data` opcional i `content-type=text|json` (per defecte `text`). La data es valida estrictament com `yyyy-mm-dd`. La ruta retorna la setmana de dilluns a diumenge que conté la data.

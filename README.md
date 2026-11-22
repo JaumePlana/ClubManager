@@ -108,3 +108,28 @@ El lector requereix les extensions PHP cURL, DOM i mbstring. L'ID de temporada
 `41` s'ha observat al HAR proporcionat i cal actualitzar-lo quan FECAPA canviï
 de temporada. Els errors de xarxa o els canvis a l'agenda es comuniquen a qui
 crida la funcio.
+
+## Integració amb WordPress
+
+Carregueu `src/IntegracioWordPress.php` des del `functions.php` del tema fill o des del connector del club. Aquest fitxer registra el shortcode `[assignacio_delegats]`, que mostra el missatge de la setmana actual. També es pot fixar una data, per exemple `[assignacio_delegats data="2026-11-18"]`. `config.php` s'ha de mantenir a l'arrel del projecte i accessible al servidor.
+
+El punt d'entrada exposa funcions PHP perquè el tema pugui presentar les dades amb el seu propi disseny:
+
+```php
+require_once '/ruta/al/ClubManager/src/IntegracioWordPress.php';
+
+$partits = clubmanager_obtenir_partits_setmanals('2026-11-18');
+$json = clubmanager_obtenir_partits_setmanals_json('2026-11-18');
+```
+
+Si no es passa una data, es fa servir el dia actual a `Europe/Madrid`. El shortcode mostra el missatge pla dins d'un element `<pre>`.
+
+### API REST de WordPress
+
+La ruta `GET /wp-json/clubmanager/v1/assignacio-delegats` retorna el missatge en text per defecte. Es pot indicar `?data=2026-11-18` per seleccionar la setmana que conté aquella data (format obligatori `yyyy-mm-dd`), i `&content-type=json` perquè retorni els partits assignats en JSON. Per exemple:
+
+- `/wp-json/clubmanager/v1/assignacio-delegats`
+- `/wp-json/clubmanager/v1/assignacio-delegats?data=2026-11-18`
+- `/wp-json/clubmanager/v1/assignacio-delegats?data=2026-11-18&content-type=json`
+
+`assignacio-delegats` és el nom de la ruta dins l'API REST. El shortcode `[assignacio_delegats]` continua disponible per inserir el missatge de text en una pàgina de WordPress.
