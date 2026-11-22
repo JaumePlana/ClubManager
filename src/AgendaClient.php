@@ -346,6 +346,7 @@ final class ClientAgenda
                 'hora' => preg_match('/^\d{2}:\d{2}$/', $time) ? $time : null,
                 'id_club_local' => (int) $row->getAttribute('club1'),
                 'id_club_visitant' => (int) $row->getAttribute('club2'),
+                'id_competicio' => self::extreureIdCompeticio($row->getAttribute('param_game')),
                 'equip_local' => self::netejar($cells->item(4)->textContent),
                 'equip_visitant' => self::netejar($cells->item(6)->textContent),
                 'resultat' => $resultat,
@@ -356,6 +357,16 @@ final class ClientAgenda
             ];
         }
         return $matches;
+    }
+
+    /** Extreu l'ID de competició, que és l'últim component numèric de param_game. */
+    private static function extreureIdCompeticio(string $parametresPartit): ?int
+    {
+        if (preg_match('/(?:^|_)(\d+)$/', trim($parametresPartit), $coincidencia) !== 1) {
+            return null;
+        }
+
+        return (int) $coincidencia[1];
     }
 
     /** Separa els gols locals i visitants del resultat, o retorna nulls si no és vàlid. */

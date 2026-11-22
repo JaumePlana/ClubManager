@@ -61,8 +61,10 @@ php tests/test_missatge.php
 ```
 
 Els camps dels partits són `competicio`, `data`, `hora`, `id_club_local`,
-`id_club_visitant`, `equip_local`, `equip_visitant`, `resultat`, `gols_local`,
-`gols_visitant`, `id_pista` i `pista`. El resultat conserva el format de
+`id_club_visitant`, `id_competicio`, `equip_local`, `equip_visitant`, `resultat`,
+`gols_local`, `gols_visitant`, `id_pista` i `pista`. `id_competicio` s'extreu
+del component final de `param_game` i identifica la competició, inclòs el grup
+quan forma part del nom. El resultat conserva el format de
 FECAPA (`gols local - gols visitant`) i els gols es retornen com a enters; si
 el partit encara no s'ha jugat, `resultat`, `gols_local` i `gols_visitant` són
 `null`. L'hora és local de `Europe/Madrid` i no es retorna cap camp `kickoff`.

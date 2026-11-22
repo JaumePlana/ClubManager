@@ -44,3 +44,17 @@ _Dissabte 14/11_
 
 _Diumenge 15/11_
 15:30 Aleví B: Delegada GGGG
+
+
+------------
+
+Crec que les preferències de Taula ja s'han definit:
+1. Seleccionar entre els possibles Delegats de l'equip.
+2. Si no es pot seleccionar un dels Delegats, aleshores seleccionar un dels Delegats de l'equip que juga abans o després.
+
+
+-------------
+
+M'agradaria que agafessis l'agenda dels 6 últims anys (temporada_id de "config.php" des del 35 al 41).
+Comprovar que els ID dels Clubs s'han mantingut al llarg dels anys. A l'igual que el de les pistes.
+I que els ID de competicio tampoc es repeteixen d'un any a un altre.
