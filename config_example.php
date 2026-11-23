@@ -19,23 +19,25 @@ return [
         'Nom de la pista alternativa',
     ],
 
-    // Les claus han de coincidir amb el camp "nom_equip_club" del JSON.
-    // Els delegats s'ordenen de més a menys preferit. Es poden posar tants
-    // noms com calgui i una persona pot aparèixer en més d'un equip.
-    'delegats_per_equip' => [
-        'Aleví Plata A' => ['Maria', 'Pere', 'Joan'],
-        'Aleví Plata B' => ['Pere', 'Laia'],
-        'Benjamí Bronze' => ['Joan', 'Maria'],
-        'FEM 13 Plata' => ['Laia', 'Maria'],
-        'FEM 17 Plata' => ['Pere', 'Joan'],
-        'Infantil Plata' => ['Maria', 'Laia'],
-        'Prebenjami Bronze' => ['Joan', 'Pere'],
-    ],
+    'delegats' => [
+        // Les claus d'equips han de coincidir amb "nom_equip_club" del JSON.
+        // Ordeneu els noms de més a menys preferit; es poden repetir entre equips.
+        'equips' => [
+            'Aleví Plata A' => ['Maria', 'Pere', 'Joan'],
+            'Aleví Plata B' => ['Pere', 'Laia'],
+            'Benjamí Bronze' => ['Joan', 'Maria'],
+            'FEM 13 Plata' => ['Laia', 'Maria'],
+            'FEM 17 Plata' => ['Pere', 'Joan'],
+            'Infantil Plata' => ['Maria', 'Laia'],
+            'Prebenjami Bronze' => ['Joan', 'Pere'],
+        ],
 
-    // Noms que al missatge s'han de mostrar com a "Delegada".
-    // Els noms que no apareguin aquí es mostraran com a "Delegat".
-    'delegades' => [
-        'Maria',
-        'Laia',
+        // Noms que al missatge s'han de mostrar com a "Delegada".
+        'delegades' => ['Maria', 'Laia'],
+
+        // Absències per data (yyyy-mm-dd); noms tal com figuren a "equips".
+        'absencies' => [
+            // '2026-11-28' => ['Maria', 'Pere'],
+        ],
     ],
 ];

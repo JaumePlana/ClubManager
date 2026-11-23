@@ -58,3 +58,21 @@ Crec que les preferències de Taula ja s'han definit:
 M'agradaria que agafessis l'agenda dels 6 últims anys (temporada_id de "config.php" des del 35 al 41).
 Comprovar que els ID dels Clubs s'han mantingut al llarg dels anys. A l'igual que el de les pistes.
 I que els ID de competicio tampoc es repeteixen d'un any a un altre.
+
+
+-------------
+
+Perfecte! Encara que no sé si tindria més sentit que l'estructura de configuració fos:
+return [
+    club =>
+    temporada_id =>
+    pistes_casa =>
+    delegats =>
+    [
+        equip =>
+        delegades =>
+        absencies =>
+    ]
+]
+
+Vull dir, tot el que sigui relatiu a la configuració de delegats que estigui agrupat dins d'un mateix "mapping" anomenat "delegats"; i aleshores tenir "submappings" per a les diferents llistes.

@@ -102,3 +102,9 @@ php tests/test_agenda.php
 - L'auditoria històrica d'IDs de competició continua pendent: les notes i HAR disponibles no mostren encara cap resposta amb aquests IDs per les temporades anteriors.
 
 - Aclariment de la integració: `assignacio-delegats` també és ara una ruta GET de l'API REST, amb `data` opcional i `content-type=text|json` (per defecte `text`). La data es valida estrictament com `yyyy-mm-dd`. La ruta retorna la setmana de dilluns a diumenge que conté la data.
+
+## Absències de delegats
+
+- Afegida la configuració opcional `delegats.absencies`, indexada per data `yyyy-mm-dd`, per llistar qui no està disponible aquell dia.
+- L'assignador exclou les persones absents tant de les assignacions de Delegat com de Taula. La configuració `delegats` agrupa ara `equips`, `delegades` i `absencies`.
+- Migrats el `config.php` local i `config_example.php` al nou esquema, preservant les preferències i noms locals. El client i el formatador llegeixen les dades del mapping `delegats`.

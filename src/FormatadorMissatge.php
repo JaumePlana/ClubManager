@@ -25,7 +25,8 @@ final class FormatadorMissatge
         $idClub = $partits === []
             ? null
             : $this->agenda->identificarIdClub($partits, (string) ($config['club'] ?? ''));
-        $delegades = $this->normalitzarNoms($config['delegades'] ?? []);
+        $configDelegats = $config['delegats'] ?? [];
+        $delegades = $this->normalitzarNoms(is_array($configDelegats) ? ($configDelegats['delegades'] ?? []) : []);
         $grups = ['casa' => [], 'fora' => []];
 
         foreach ($partits as $partit) {

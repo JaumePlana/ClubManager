@@ -25,9 +25,37 @@ final class AssignadorPartits
 
         $nomClub = (string) ($config['club'] ?? '');
         $idClub = $this->agenda->identificarIdClub($partits, $nomClub);
-        $delegatsPerEquip = $config['delegats_per_equip'] ?? [];
+        $configDelegats = $config['delegats'] ?? [];
+        if (!is_array($configDelegats)) {
+            throw new InvalidArgumentException('La configuració delegats ha de ser una matriu.');
+        }
+        $delegatsPerEquip = $configDelegats['equips'] ?? [];
         if (!is_array($delegatsPerEquip)) {
-            throw new InvalidArgumentException('La configuració delegats_per_equip ha de ser una matriu.');
+            throw new InvalidArgumentException('La configuració delegats.equips ha de ser una matriu.');
+        }
+        $absencies = $configDelegats['absencies'] ?? [];
+        if (!is_array($absencies)) {
+            throw new InvalidArgumentException('La configuració delegats.absencies ha de ser una matriu indexada per data.');
+        }
+        foreach ($absencies as $dataAbsencia => $nomsAbsents) {
+            $dataValida = is_string($dataAbsencia)
+                ? DateTimeImmutable::createFromFormat('!Y-m-d', $dataAbsencia)
+                : false;
+            $errorsData = DateTimeImmutable::getLastErrors();
+            if ($dataValida === false
+                || $dataValida->format('Y-m-d') !== $dataAbsencia
+                || ($errorsData !== false && ($errorsData['warning_count'] > 0 || $errorsData['error_count'] > 0))) {
+                throw new InvalidArgumentException('Cada absència ha de tenir una data vàlida en format yyyy-mm-dd.');
+            }
+            if (!is_array($nomsAbsents)) {
+                throw new InvalidArgumentException('Cada data d’absència ha de contenir una llista de noms.');
+            }
+            foreach ($nomsAbsents as $nomAbsent) {
+                if (!is_string($nomAbsent) || trim($nomAbsent) === '') {
+                    throw new InvalidArgumentException('Els noms de la configuració delegats.absencies han de ser cadenes no buides.');
+                }
+            }
+            $absencies[$dataAbsencia] = array_values(array_unique(array_map('trim', $nomsAbsents)));
         }
         $pistesConfigurades = $config['pistes_casa'] ?? [];
         $pistesCasa = is_array($pistesConfigurades)
@@ -48,9 +76,11 @@ final class AssignadorPartits
         }
 
         $ordreDelegats = array_keys($resultats);
-        usort($ordreDelegats, function (int $a, int $b) use ($resultats, $inicis, $delegatsPerEquip): int {
-            $delegatsA = $this->delegatsDe($resultats[$a]['nom_equip_club'], $delegatsPerEquip);
-            $delegatsB = $this->delegatsDe($resultats[$b]['nom_equip_club'], $delegatsPerEquip);
+        usort($ordreDelegats, function (int $a, int $b) use ($resultats, $inicis, $delegatsPerEquip, $absencies): int {
+            $absentsA = $absencies[$resultats[$a]['data']] ?? [];
+            $absentsB = $absencies[$resultats[$b]['data']] ?? [];
+            $delegatsA = $this->delegatsDe($resultats[$a]['nom_equip_club'], $delegatsPerEquip, $absentsA);
+            $delegatsB = $this->delegatsDe($resultats[$b]['nom_equip_club'], $delegatsPerEquip, $absentsB);
             $perDisponibilitat = count($delegatsA) <=> count($delegatsB);
             if ($perDisponibilitat !== 0) {
                 return $perDisponibilitat;
@@ -66,7 +96,8 @@ final class AssignadorPartits
             if ($inici === null) {
                 continue;
             }
-            foreach ($this->delegatsDe($resultats[$index]['nom_equip_club'], $delegatsPerEquip) as $delegat) {
+            $absents = $absencies[$resultats[$index]['data']] ?? [];
+            foreach ($this->delegatsDe($resultats[$index]['nom_equip_club'], $delegatsPerEquip, $absents) as $delegat) {
                 if ($this->potFerDeDelegat($delegat, $inici, $ocupacions)) {
                     $resultats[$index]['delegat'] = $delegat;
                     $ocupacions[$delegat][] = [
@@ -94,7 +125,8 @@ final class AssignadorPartits
                 continue;
             }
 
-            $candidats = $this->candidatsTaula($index, $resultats, $inicis, $partitsACasa, $delegatsPerEquip);
+            $absents = $absencies[$resultats[$index]['data']] ?? [];
+            $candidats = $this->candidatsTaula($index, $resultats, $inicis, $partitsACasa, $delegatsPerEquip, $absents);
             foreach ($candidats as $candidat) {
                 if ($resultats[$index]['delegat'] === $candidat
                     || !$this->potFerDeTaula(
@@ -122,7 +154,7 @@ final class AssignadorPartits
         return array_values($resultats);
     }
 
-    private function delegatsDe(string $equip, array $delegatsPerEquip): array
+    private function delegatsDe(string $equip, array $delegatsPerEquip, array $absents = []): array
     {
         $delegats = $delegatsPerEquip[$equip] ?? [];
         if (!is_array($delegats)) {
@@ -130,7 +162,7 @@ final class AssignadorPartits
         }
 
         return array_values(array_unique(array_filter($delegats, static fn ($nom): bool =>
-            is_string($nom) && trim($nom) !== ''
+            is_string($nom) && trim($nom) !== '' && !in_array(trim($nom), $absents, true)
         )));
     }
 
@@ -140,8 +172,9 @@ final class AssignadorPartits
         array $inicis,
         array $partitsACasa,
         array $delegatsPerEquip,
+        array $absents,
     ): array {
-        $candidats = $this->delegatsDe($partits[$index]['nom_equip_club'], $delegatsPerEquip);
+        $candidats = $this->delegatsDe($partits[$index]['nom_equip_club'], $delegatsPerEquip, $absents);
         $altresPartits = [];
         foreach ($partits as $altreIndex => $partit) {
             if ($altreIndex === $index || !$partitsACasa[$altreIndex]
@@ -160,7 +193,7 @@ final class AssignadorPartits
         foreach ($altresPartits as $altreIndex) {
             $candidats = array_merge(
                 $candidats,
-                $this->delegatsDe($partits[$altreIndex]['nom_equip_club'], $delegatsPerEquip),
+                $this->delegatsDe($partits[$altreIndex]['nom_equip_club'], $delegatsPerEquip, $absents),
             );
         }
 

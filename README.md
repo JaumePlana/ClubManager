@@ -49,9 +49,9 @@ entre els inicis.
 per compartir, agrupat per partits a casa i fora i ordenat per dia i hora.
 Mostra el nom d'equip exactament com apareix al camp `nom_equip_club` del JSON.
 Per generar-lo, carregueu també `src/FormatadorMissatge.php` i passeu-li els
-partits assignats i la configuració. El camp `delegades` de `config.php` permet
-indicar quins noms han d'aparèixer com a «Delegada»; els altres es mostren com
-a «Delegat». `tests/test_missatge.php` executa aquest flux i imprimeix el missatge.
+partits assignats i la configuració. `delegats.delegades` permet indicar quins
+noms han d'aparèixer com a «Delegada»; els altres es mostren com a «Delegat».
+`tests/test_missatge.php` executa aquest flux i imprimeix el missatge.
 
 Els scripts d'exemple són a `tests/`. Executeu-los des de l'arrel del projecte:
 
@@ -75,10 +75,14 @@ Plata i Or; les categories FEM es mantenen en majuscules.
 ## Configuració del club
 
 Copieu `config_example.php` com a `config.php` i substituïu les dades d'exemple
-pel nom del club, l'ID de temporada, les pistes de casa, els delegats per equip
-i quins noms s'han de mostrar com a delegades. Dins de cada equip, poseu els
-delegats en ordre de preferència. Les claus de `delegats_per_equip` han de
-coincidir amb `nom_equip_club`. Una persona pot aparèixer en diversos equips.
+pel nom del club, l'ID de temporada i les pistes de casa. Tota la configuració
+de persones queda agrupada a `delegats`: `equips` conté els delegats per equip
+en ordre de preferència, `delegades` indica quins noms es mostren com a
+«Delegada», i `absencies` relaciona dates (`yyyy-mm-dd`) amb els noms absents.
+Per exemple, `'absencies' => ['2026-11-28' => ['Maria', 'Pere']]`. Les claus de
+`delegats.equips` han de coincidir amb `nom_equip_club`; una persona pot aparèixer
+en diversos equips. Una persona absent no es considera per a cap assignació de
+Delegat o Taula en cap partit d'aquella data.
 L'ID FECAPA del club es detecta a partir del nom configurat i dels noms dels
 equips que apareixen a l'agenda. El fitxer és local i està exclòs de Git perquè
 pot contenir dades internes.
